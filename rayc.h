@@ -17,7 +17,7 @@ using namespace std;
 #define PI 3.1415926
 #define playerSpeed 2
 #define playerThetaSpeed 45
-#define maxSightRange 50
+#define maxSightRange 1000
 
 //맵 기준 위치
 glm::vec3 player = glm::vec3(2,2,3); //x,y,z

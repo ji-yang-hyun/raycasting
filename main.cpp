@@ -12,10 +12,14 @@
 #include"map.h"
 #include"rayc.h"
 #include"bad_apple_data.h"
+#include<string>
 
 float renderTime;
 Shader ourShader;
 bool isChange = true;
+bool isPlay = false;
+
+int visBox = 0;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) 
 {
@@ -42,6 +46,57 @@ void processInput(GLFWwindow *window)
     if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 
+    if(glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS){
+        isPlay = true;
+    }
+    if(glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS){
+        isPlay = false;
+    }
+
+    if(glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS){
+        ourShader.use();
+        ourShader.setInt("visBox", 1);
+    }
+    if(glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS){
+        ourShader.use();
+        ourShader.setInt("visBox", 2);
+    }
+    if(glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS){
+        ourShader.use();
+        ourShader.setInt("visBox", 3);
+    }
+    if(glfwGetKey(window, GLFW_KEY_4) == GLFW_PRESS){
+        ourShader.use();
+        ourShader.setInt("visBox", 4);
+    }
+    if(glfwGetKey(window, GLFW_KEY_5) == GLFW_PRESS){
+        ourShader.use();
+        ourShader.setInt("visBox", 5);
+    }
+    if(glfwGetKey(window, GLFW_KEY_6) == GLFW_PRESS){
+        ourShader.use();
+        ourShader.setInt("visBox", 6);
+    }
+    if(glfwGetKey(window, GLFW_KEY_7) == GLFW_PRESS){
+        ourShader.use();
+        ourShader.setInt("visBox", 7);
+    }
+    if(glfwGetKey(window, GLFW_KEY_8) == GLFW_PRESS){
+        ourShader.use();
+        ourShader.setInt("visBox", 8);
+    }
+    if(glfwGetKey(window, GLFW_KEY_9) == GLFW_PRESS){
+        ourShader.use();
+        ourShader.setInt("visBox", 9);
+    }
+    if(glfwGetKey(window, GLFW_KEY_0) == GLFW_PRESS){
+        ourShader.use();
+        ourShader.setInt("visBox", 0);
+    }
+    if(glfwGetKey(window, GLFW_KEY_BACKSPACE) == GLFW_PRESS){
+        ourShader.use();
+        ourShader.setInt("visBox", -1);
+    }
     
     if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS){
         move = scaleVector(Dxy, moveDst);
@@ -147,13 +202,39 @@ void animation(float time, int* currentFrameAdd){
     int frame = (int)(time*fps);
     // printf("%d\n", frame);
     if(frame != *currentFrameAdd){
-        if(frame >= frameCount){
-            frame = 0;
-        }
-        changeScreen(frame);
+        changeScreen(frame%frameCount);
         // printf("%d\n", *currentFrameAdd);
     }
     *currentFrameAdd = frame;
+}
+
+void setBoxUniform(int n){
+    Box box = boxes[n];
+    string location;
+    string head = "boxes[";
+    string tail = "].";
+    string params[6] = {"areaP1", "areaP2", "childIdx1", "childIdx2", "cubeCount", "cubes"};
+    string idx = to_string(n);
+    string str3 = "]";
+    ourShader.use();
+    ourShader.setVec3(head + idx + tail + params[0], box.areaP1);
+    ourShader.setVec3(head + idx + tail + params[1], box.areaP2);
+    ourShader.setInt(head + idx + tail + params[2], box.childIdx1);
+    ourShader.setInt(head + idx + tail + params[3], box.childIdx2);
+
+    if(box.childIdx1 == 0){
+        ourShader.setInt(head + idx + tail + params[4], box.cubes.size());
+        glUniform3fv(glGetUniformLocation(ourShader.ID, (head + idx + tail + params[5]).c_str()), 
+        box.cubes.size(), glm::value_ptr(box.cubes[0]));
+    }
+}
+
+void setBoxesUniform(){
+    ourShader.use();
+    ourShader.setInt("visBox", visBox);
+    for(int i=0;i<boxes.size();i++){
+        setBoxUniform(i);
+    }
 }
 
 int main(){
@@ -183,6 +264,10 @@ int main(){
     ourShader.setShader("shader.vs", "distance_shader.frag");
 
     // wall Data uniform 보내주기
+    changeScreen(30);
+    wallCoordinate();
+    root();
+    setBoxesUniform();
     ourShader.use();
     glUniform3fv(glGetUniformLocation(ourShader.ID, "wallsCoord"), walls.size(), glm::value_ptr(walls[0])); 
     ourShader.setInt("wallCount", walls.size());
@@ -213,8 +298,9 @@ int main(){
 
     while(!glfwWindowShouldClose(window))
     {
+        
         processInput(window);
-        animation((float)glfwGetTime(), &currentFrame);
+        // animation((float)glfwGetTime(), &currentFrame);
         printf("%f\n", (float)glfwGetTime() - renderTime);
         renderTime = (float)glfwGetTime();
         
